@@ -1,16 +1,26 @@
 import Navbar from "@/components/Navbar";
+import HistoryClient1 from "./HistoryClient1";
 
 export default function KC1HistoryPage() {
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-50 pb-20">
       <Navbar />
-      <div className="max-w-7xl mx-auto py-10 px-4">
-        <h1 className="text-2xl font-bold text-slate-800">
-          Đây là màn hình lịch sử của máy GuideKC #1
-        </h1>
-        <p className="mt-4 text-slate-600">
-          (Dữ liệu log lịch sử hoạt động cũ sẽ hiển thị tại đây...)
-        </p>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">
+            Lịch sử hoạt động GuideKC #1
+          </h1>
+          <p className="mt-2 text-slate-600">
+            Tra cứu chi tiết lịch sử lỗi và cảnh báo. Dữ liệu được lưu trữ từ hệ thống PLC.
+          </p>
+        </div>
+
+        {/* Client Component chứa Logic tìm kiếm */}
+        <HistoryClient1 />
+        
       </div>
     </main>
   );

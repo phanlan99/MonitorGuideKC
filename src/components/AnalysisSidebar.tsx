@@ -1,10 +1,10 @@
 // src/components/AnalysisSidebar.tsx
-import { BarChart3, Calendar, CalendarDays, LayoutDashboard } from "lucide-react";
+import { BarChart3, Calendar, CalendarDays, LayoutDashboard, TrendingUp } from "lucide-react";
 
-// 1. Thêm 'monthly' vào type
+// Thêm 'trend' vào type
 interface SidebarProps {
-  activeTab: '7days' | 'weekly' | 'monthly';
-  onTabChange: (tab: '7days' | 'weekly' | 'monthly') => void;
+  activeTab: '7days' | 'weekly' | 'monthly' | 'trend';
+  onTabChange: (tab: '7days' | 'weekly' | 'monthly' | 'trend') => void;
 }
 
 export default function AnalysisSidebar({ activeTab, onTabChange }: SidebarProps) {
@@ -44,7 +44,7 @@ export default function AnalysisSidebar({ activeTab, onTabChange }: SidebarProps
             Thống kê theo Tuần
           </button>
 
-          {/* MỚI: Nút 3: Theo Tháng */}
+          {/* Nút 3: Theo Tháng */}
           <button
             onClick={() => onTabChange('monthly')}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors
@@ -55,6 +55,19 @@ export default function AnalysisSidebar({ activeTab, onTabChange }: SidebarProps
           >
             <CalendarDays className="w-5 h-5" />
             Thống kê theo Tháng
+          </button>
+
+          {/* MỚI: Nút 4: Theo Xu hướng (Trend) */}
+          <button
+            onClick={() => onTabChange('trend')}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors
+              ${activeTab === 'trend' 
+                ? 'bg-purple-50 text-purple-700 border border-purple-100 shadow-sm' 
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+          >
+            <TrendingUp className="w-5 h-5" />
+            Xu hướng thời gian
           </button>
         </nav>
       </div>

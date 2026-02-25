@@ -5,13 +5,14 @@ import { useState } from 'react';
 import Navbar from "@/components/Navbar";
 import AnalysisChart7ngay from "@/components/AnalysisChart7ngay";
 import AnalysisChartWeekly from "@/components/AnalysisChartWeekly";
-import AnalysisChartMonthly from "@/components/AnalysisChartMonthly"; // <-- Import biểu đồ tháng
+import AnalysisChartMonthly from "@/components/AnalysisChartMonthly"; 
+import AnalysisChartTrend from "@/components/AnalysisChartTrend"; // <-- Import mới cho tab xu hướng
 import AnalysisSidebar from "@/components/AnalysisSidebar";
 import { PieChart } from "lucide-react";
 
 export default function KC2AnalysisPage() {
-  // Thêm type 'monthly' vào state
-  const [activeTab, setActiveTab] = useState<'7days' | 'weekly' | 'monthly'>('7days');
+  // Thêm type 'trend' vào state
+  const [activeTab, setActiveTab] = useState<'7days' | 'weekly' | 'monthly' | 'trend'>('7days');
 
   return (
     <main className="min-h-screen bg-slate-50 pb-20">
@@ -54,10 +55,17 @@ export default function KC2AnalysisPage() {
               </div>
             )}
 
-            {/* MỚI: Tab thống kê tháng */}
+            {/* Tab thống kê tháng */}
             {activeTab === 'monthly' && (
               <div className="animate-in fade-in zoom-in duration-300">
                 <AnalysisChartMonthly />
+              </div>
+            )}
+
+            {/* MỚI: Tab xu hướng */}
+            {activeTab === 'trend' && (
+              <div className="animate-in fade-in zoom-in duration-300">
+                <AnalysisChartTrend />
               </div>
             )}
 
