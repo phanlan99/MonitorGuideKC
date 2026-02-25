@@ -1,25 +1,25 @@
+// src/services/kc2-analysis.ts
 'use server'
 
 import { db } from '@/lib/db';
 
 export interface DailyAnalysisData {
-  date: string;          // Ngày (VD: 12/02)
-  fullDate: string;      // Ngày đầy đủ để query (2026-02-12)
-  error_active: number;  // Số lượng đang lỗi (Alarm4)
-  error_resolved: number;// Số lượng đã xử lý (Alarm5)
-  warning_active: number;// Số lượng đang cảnh báo (Alarm6)
-  warning_resolved: number; // Số lượng cảnh báo đã xử lý (Alarm7)
+  date: string;          
+  fullDate: string;      
+  error_active: number;  
+  error_resolved: number;
+  warning_active: number;
+  warning_resolved: number; 
 }
 
 export async function getWeeklyAnalysis(): Promise<DailyAnalysisData[]> {
   try {
-    // 1. Tạo mảng 7 ngày gần nhất (bao gồm hôm nay)
     const days: DailyAnalysisData[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
-      const displayStr = `${d.getDate()}/${d.getMonth() + 1}`; // DD/MM
+      const dateStr = d.toISOString().split('T')[0];
+      const displayStr = `${d.getDate()}/${d.getMonth() + 1}`; 
 
       days.push({
         date: displayStr,
@@ -31,8 +31,6 @@ export async function getWeeklyAnalysis(): Promise<DailyAnalysisData[]> {
       });
     }
 
-    // 2. Query đếm dữ liệu Group By ngày
-    // Helper function để query count theo ngày
     const getCountByDate = async (tableName: string) => {
       const sql = `
         SELECT DATE(occurred_at) as log_date, COUNT(*) as count 
@@ -44,21 +42,17 @@ export async function getWeeklyAnalysis(): Promise<DailyAnalysisData[]> {
       return rows as any[];
     };
 
-    // Chạy song song 4 query cho nhanh
+    // === CHỈ SỬA TÊN BẢNG TẠI ĐÂY ===
     const [errActive, errResolved, warActive, warResolved] = await Promise.all([
-      getCountByDate('guidekc_alarm4'),
-      getCountByDate('guidekc_alarm5'),
-      getCountByDate('guidekc_alarm6'),
-      getCountByDate('guidekc_alarm7'),
+      getCountByDate('guidekc_alarm_new4'), // Thay vì guidekc_alarm4
+      getCountByDate('guidekc_alarm_new5'), // Thay vì guidekc_alarm5
+      getCountByDate('guidekc_alarm_new6'), // Thay vì guidekc_alarm6
+      getCountByDate('guidekc_alarm_new7'), // Thay vì guidekc_alarm7
     ]);
 
-    // 3. Map dữ liệu từ DB vào mảng 7 ngày
-    // Chúng ta duyệt qua từng ngày đã tạo sẵn, tìm xem trong DB có dữ liệu ngày đó không
     const finalData = days.map(day => {
-      // Helper tìm số lượng trong mảng kết quả DB
       const findCount = (rows: any[]) => {
         const row = rows.find((r: any) => {
-          // Convert date từ DB sang string YYYY-MM-DD để so sánh
           const dbDate = new Date(r.log_date).toISOString().split('T')[0];
           return dbDate === day.fullDate;
         });

@@ -1,8 +1,8 @@
+// src/app/kc2/monitor/MonitorClient.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, Clock, AlertOctagon, RefreshCw } from 'lucide-react';
-// Import trực tiếp hàm từ service
+import { AlertTriangle, CheckCircle, Clock, AlertOctagon, RefreshCw, Box } from 'lucide-react';
 import { getKC2Logs, LogItem } from '@/services/kc2-service';
 
 export default function MonitorClient() {
@@ -14,7 +14,6 @@ export default function MonitorClient() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // GỌI TRỰC TIẾP HÀM SERVER Ở ĐÂY (Không cần fetch)
       const logs = await getKC2Logs(activeTab);
       setData(logs);
     } catch (err) {
@@ -34,7 +33,7 @@ export default function MonitorClient() {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
       
-      {/* --- Phần Tab và Toolbar giữ nguyên như cũ --- */}
+      {/* --- Các Tabs giữ nguyên --- */}
       <div className="flex border-b border-slate-200">
         <button
           onClick={() => setActiveTab('error')}
@@ -44,7 +43,7 @@ export default function MonitorClient() {
               : 'text-slate-500 hover:bg-slate-50'}`}
         >
           <AlertOctagon className="w-5 h-5" />
-          Lỗi (M2001-M2064)
+          Lỗi GuideKC #2 (M2001-M2064)
         </button>
         <button
           onClick={() => setActiveTab('warning')}
@@ -54,39 +53,41 @@ export default function MonitorClient() {
               : 'text-slate-500 hover:bg-slate-50'}`}
         >
           <AlertTriangle className="w-5 h-5" />
-          Cảnh báo (M2101-M2164)
+          Cảnh báo GuideKC #2 (M2101-M2164)
         </button>
       </div>
 
       <div className="flex justify-between items-center p-4 bg-slate-50 border-b border-slate-200">
-        <span className="text-sm text-slate-500 font-medium">
-          Dữ liệu trực tiếp từ Server (Cập nhật 5s/lần)
+        <span className="text-sm text-slate-500">
+          Hiển thị 20 bản ghi mới nhất từ Database
         </span>
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <Clock className="w-3 h-3" />
-          {lastUpdated.toLocaleTimeString()}
+          Cập nhật: {lastUpdated.toLocaleTimeString()}
           <button onClick={fetchData} disabled={loading} className="p-1 hover:bg-slate-200 rounded">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* --- Phần Table hiển thị --- */}
+      {/* --- Table Content --- */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-100 text-slate-600 text-sm uppercase tracking-wider">
               <th className="px-6 py-3 font-semibold border-b">Thời gian</th>
               <th className="px-6 py-3 font-semibold border-b">Mã Lỗi</th>
+              {/* THÊM CỘT MÃ HÀNG Ở ĐÂY */}
+              <th className="px-6 py-3 font-semibold border-b">Mã hàng</th>
               <th className="px-6 py-3 font-semibold border-b">Nội dung</th>
               <th className="px-6 py-3 font-semibold border-b">Trạng thái</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading && data.length === 0 ? (
-              <tr><td colSpan={4} className="text-center py-10">Đang tải...</td></tr>
+              <tr><td colSpan={5} className="text-center py-10">Đang tải dữ liệu...</td></tr>
             ) : data.length === 0 ? (
-              <tr><td colSpan={4} className="text-center py-10 text-slate-400">Không có dữ liệu</td></tr>
+              <tr><td colSpan={5} className="text-center py-10 text-slate-400">Không có dữ liệu ghi nhận</td></tr>
             ) : (
               data.map((item) => (
                 <tr key={`${item.id}-${item.status}`} className="hover:bg-slate-50 transition-colors">
@@ -95,6 +96,13 @@ export default function MonitorClient() {
                   </td>
                   <td className="px-6 py-4 text-sm font-bold text-slate-700">
                     M{item.error_code}
+                  </td>
+                  {/* HIỂN THỊ DỮ LIỆU MÃ HÀNG KÈM ICON */}
+                  <td className="px-6 py-4 text-sm font-semibold text-blue-600 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <Box className="w-4 h-4 text-blue-400" />
+                      {item.product_info}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-800">
                     {item.error_content}
@@ -112,7 +120,7 @@ export default function MonitorClient() {
   );
 }
 
-// Component Badge (Giữ nguyên)
+// Component hiển thị Badge trạng thái (Giữ nguyên)
 function StatusBadge({ status, type }: { status: 'active' | 'resolved'; type: 'error' | 'warning' }) {
   if (status === 'resolved') {
     return (
@@ -122,15 +130,20 @@ function StatusBadge({ status, type }: { status: 'active' | 'resolved'; type: 'e
       </span>
     );
   }
-  return type === 'error' ? (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 animate-pulse">
-      <AlertOctagon className="w-3 h-3" />
-      Đang lỗi
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 animate-pulse">
-      <AlertTriangle className="w-3 h-3" />
-      Cảnh báo
-    </span>
-  );
+
+  if (type === 'error') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 animate-pulse">
+        <AlertOctagon className="w-3 h-3" />
+        Đang lỗi
+      </span>
+    );
+  } else {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 animate-pulse">
+        <AlertTriangle className="w-3 h-3" />
+        Cảnh báo
+      </span>
+    );
+  }
 }

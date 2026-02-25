@@ -1,21 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Filter, AlertTriangle, AlertOctagon, CheckCircle, Activity, CalendarClock } from 'lucide-react';
+import { Search, Filter, AlertTriangle, AlertOctagon, CheckCircle, Activity, CalendarClock, Box } from 'lucide-react';
 import { searchKC2History, HistoryItem, HistoryFilter } from '@/services/kc2-service';
 
 export default function HistoryClient() {
   
-  // Hàm lấy giờ hiện tại format chuẩn cho input datetime-local (YYYY-MM-DDTHH:mm)
   const getLocalNow = () => {
     const now = new Date();
-    // Chỉnh lại timezone offset để lấy giờ địa phương
     const offset = now.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
     return localISOTime;
   };
 
-  // Hàm lấy giờ đầu ngày (00:00 hôm nay)
   const getStartOfDay = () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -23,17 +20,17 @@ export default function HistoryClient() {
     return (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
   };
 
-  // --- STATE QUẢN LÝ BỘ LỌC ---
+  // THÊM: productInfo vào state mặc định
   const [filters, setFilters] = useState<HistoryFilter>({
-    startDate: getStartOfDay(), // Mặc định: 00:00 hôm nay
-    endDate: getLocalNow(),     // Mặc định: Giờ phút hiện tại
+    startDate: getStartOfDay(), 
+    endDate: getLocalNow(),     
     errorCode: '',
     content: '',
+    productInfo: '', // <--- THÊM MỚI
     status: 'all',
     type: 'all'
   });
 
-  // ... (Phần state data và handleSearch giữ nguyên)
   const [data, setData] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -61,7 +58,6 @@ export default function HistoryClient() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          {/* CẬP NHẬT: Input datetime-local */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase">Từ thời điểm</label>
             <input 
@@ -83,9 +79,8 @@ export default function HistoryClient() {
             />
           </div>
 
-          {/* Các input khác giữ nguyên */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-500 uppercase">Mã lỗi</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase">Mã lỗi (M)</label>
             <input 
               type="number" 
               placeholder="VD: 2001"
@@ -105,7 +100,23 @@ export default function HistoryClient() {
             />
           </div>
 
-          {/* Select Type & Status (Giữ nguyên) */}
+          {/* Ô INPUT MỚI: MÃ HÀNG */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase">Mã hàng</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                <Box className="h-4 w-4 text-slate-400" />
+              </div>
+              <input 
+                type="text" 
+                placeholder="VD: MST-5-10"
+                className="w-full pl-9 p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={filters.productInfo || ''}
+                onChange={(e) => setFilters({...filters, productInfo: e.target.value})}
+              />
+            </div>
+          </div>
+
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase">Loại sự cố</label>
             <select 
@@ -132,8 +143,8 @@ export default function HistoryClient() {
             </select>
           </div>
 
-          {/* Nút tìm kiếm */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-2 flex items-end">
+          {/* Nút tìm kiếm đẩy sang cuối cùng */}
+          <div className="flex items-end">
             <button 
               type="submit"
               disabled={loading}
@@ -145,12 +156,12 @@ export default function HistoryClient() {
         </div>
       </form>
 
-      {/* === BẢNG KẾT QUẢ (Giữ nguyên phần hiển thị bảng như cũ) === */}
+      {/* === BẢNG KẾT QUẢ === */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
         {!hasSearched ? (
           <div className="flex flex-col items-center justify-center h-[400px] text-slate-400">
             <CalendarClock className="w-16 h-16 mb-4 opacity-20" />
-            <p className="text-lg font-medium">Chọn khoảng thời gian và nhấn Tìm kiếm</p>
+            <p className="text-lg font-medium">Chọn điều kiện và nhấn Tìm kiếm</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -160,6 +171,8 @@ export default function HistoryClient() {
                   <th className="px-6 py-4 border-b">Thời gian</th>
                   <th className="px-6 py-4 border-b">Loại</th>
                   <th className="px-6 py-4 border-b">Mã (M)</th>
+                  {/* THÊM CỘT MÃ HÀNG */}
+                  <th className="px-6 py-4 border-b">Mã hàng</th>
                   <th className="px-6 py-4 border-b">Nội dung</th>
                   <th className="px-6 py-4 border-b">Trạng thái</th>
                 </tr>
@@ -167,8 +180,8 @@ export default function HistoryClient() {
               <tbody className="divide-y divide-slate-100">
                 {data.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-10 text-slate-500">
-                      Không tìm thấy dữ liệu trong khoảng thời gian này.
+                    <td colSpan={6} className="text-center py-10 text-slate-500">
+                      Không tìm thấy dữ liệu phù hợp.
                     </td>
                   </tr>
                 ) : (
@@ -189,6 +202,15 @@ export default function HistoryClient() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm font-bold text-slate-800">M{item.error_code}</td>
+                      
+                      {/* HIỂN THỊ DỮ LIỆU MÃ HÀNG */}
+                      <td className="px-6 py-4 text-sm font-semibold text-blue-600 whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <Box className="w-4 h-4 text-blue-400" />
+                          {item.product_info}
+                        </div>
+                      </td>
+
                       <td className="px-6 py-4 text-sm text-slate-700">{item.error_content}</td>
                       <td className="px-6 py-4">
                         {item.status === 'active' ? (
