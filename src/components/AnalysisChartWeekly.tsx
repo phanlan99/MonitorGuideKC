@@ -1,9 +1,13 @@
+// src/components/AnalysisChartWeekly.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getYearlyWeeklyAnalysis, WeeklyAnalysisData } from '@/services/kc2-weekly-analysis';
 import { Loader2, ChevronLeft, ChevronRight, Calendar, Filter } from 'lucide-react';
+
+// 1. IMPORT COMPONENT PHÂN TRANG VỪA TẠO
+import AnalysisWeeklyStats2 from './AnalysisWeeklyStats2'; 
 
 const ITEMS_PER_PAGE = 7;
 
@@ -17,7 +21,7 @@ export default function AnalysisChartWeekly() {
 
   // Tạo danh sách năm để chọn (Ví dụ: Từ 2024 đến năm hiện tại + 1)
   const currentSystemYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentSystemYear - 3 + i); // [2023, 2024, 2025, 2026, 2027]
+  const years = Array.from({ length: 5 }, (_, i) => currentSystemYear - 3 + i);
 
   useEffect(() => {
     const loadData = async () => {
@@ -27,14 +31,11 @@ export default function AnalysisChartWeekly() {
         setData(result);
         
         // --- LOGIC NHẢY TRANG THÔNG MINH ---
-        // 1. Nếu đang xem năm hiện tại -> Nhảy đến tuần hiện tại
-        // 2. Nếu xem năm khác -> Giữ nguyên trang hiện tại để tiện so sánh (VD: So tuần 7 năm nay với tuần 7 năm ngoái)
         if (selectedYear === currentSystemYear) {
             const currentWeek = getWeekNumber(new Date());
             const initialPage = Math.ceil(currentWeek / ITEMS_PER_PAGE);
             setCurrentPage(initialPage > 0 ? initialPage : 1);
         }
-        // Nếu không phải năm hiện tại, ta không reset currentPage để người dùng dễ so sánh cùng 1 khoảng thời gian giữa các năm
         
       } catch (error) {
         console.error(error);
@@ -43,7 +44,7 @@ export default function AnalysisChartWeekly() {
       }
     };
     loadData();
-  }, [selectedYear]); // Chạy lại khi đổi năm
+  }, [selectedYear]);
 
   // Logic cắt dữ liệu
   const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
@@ -74,95 +75,96 @@ export default function AnalysisChartWeekly() {
   }
 
   return (
-    <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <div className="flex flex-col gap-6">
       
-      {/* HEADER: Tiêu đề + Bộ chọn năm */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      {/* 1. KHUNG BIỂU ĐỒ */}
+      <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-slate-200">
         
-        {/* Tiêu đề */}
-        <div>
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-purple-600" />
-            Thống kê Tuần - Năm {selectedYear}
-          </h3>
-          <p className="text-xs text-slate-500 mt-1">
-            Hiển thị dữ liệu tổng hợp 52 tuần của năm {selectedYear}
-          </p>
-        </div>
-
-        {/* Dropdown Chọn Năm */}
-        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
-          <div className="pl-2">
-            <Filter className="w-4 h-4 text-slate-400" />
+        {/* HEADER: Tiêu đề + Bộ chọn năm */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-purple-600" />
+              Thống kê Tuần - Năm {selectedYear}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Hiển thị dữ liệu tổng hợp 52 tuần của năm {selectedYear}
+            </p>
           </div>
-          <select 
-            value={selectedYear}
-            onChange={handleYearChange}
-            className="bg-transparent text-sm font-semibold text-slate-700 py-1.5 px-2 outline-none cursor-pointer hover:text-purple-600 transition-colors"
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                Năm {year}
-              </option>
-            ))}
-          </select>
+
+          {/* Dropdown Chọn Năm */}
+          <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
+            <div className="pl-2">
+              <Filter className="w-4 h-4 text-slate-400" />
+            </div>
+            <select 
+              value={selectedYear}
+              onChange={handleYearChange}
+              className="bg-transparent text-sm font-semibold text-slate-700 py-1.5 px-2 outline-none cursor-pointer hover:text-purple-600 transition-colors"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  Năm {year}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
-      
-      {/* BIỂU ĐỒ */}
-      <div className="h-[400px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={displayedData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            barGap={2}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-            <XAxis dataKey="label" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-            <Tooltip 
-              cursor={{ fill: '#f1f5f9' }}
-              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-            />
-            <Legend wrapperStyle={{ paddingTop: '20px' }} />
-
-            {/* Cột Lỗi */}
-            <Bar dataKey="error_resolved" name="Lỗi (Đã xử lý)" stackId="errors" fill="#22c55e" radius={[0, 0, 4, 4]} barSize={40} />
-            <Bar dataKey="error_active" name="Lỗi (Đang xảy ra)" stackId="errors" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={40} />
-
-            {/* Cột Cảnh báo */}
-            <Bar dataKey="warning_resolved" name="Cảnh báo (Đã xử lý)" stackId="warnings" fill="#60a5fa" radius={[0, 0, 4, 4]} barSize={40} />
-            <Bar dataKey="warning_active" name="Cảnh báo (Đang xảy ra)" stackId="warnings" fill="#eab308" radius={[4, 4, 0, 0]} barSize={40} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* THANH ĐIỀU HƯỚNG / PHÂN TRANG */}
-      <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
         
-        <button
-          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-          className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Trước
-        </button>
+        {/* BIỂU ĐỒ */}
+        <div className="h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={displayedData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              barGap={2}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis dataKey="label" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+              <Tooltip 
+                cursor={{ fill: '#f1f5f9' }}
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              />
+              <Legend wrapperStyle={{ paddingTop: '20px' }} />
 
-        <span className="text-sm font-semibold text-slate-700">
-          Hiển thị tuần {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, data.length)} 
-          <span className="text-slate-400 mx-2">|</span> 
-          Trang {currentPage} / {totalPages}
-        </span>
+              <Bar dataKey="error_resolved" name="Lỗi (Đã xử lý)" stackId="errors" fill="#22c55e" radius={[0, 0, 4, 4]} barSize={40} />
+              <Bar dataKey="error_active" name="Lỗi (Đang xảy ra)" stackId="errors" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={40} />
+              <Bar dataKey="warning_resolved" name="Cảnh báo (Đã xử lý)" stackId="warnings" fill="#60a5fa" radius={[0, 0, 4, 4]} barSize={40} />
+              <Bar dataKey="warning_active" name="Cảnh báo (Đang xảy ra)" stackId="warnings" fill="#eab308" radius={[4, 4, 0, 0]} barSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        <button
-          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          Tiếp <ChevronRight className="w-4 h-4" />
-        </button>
+        {/* THANH ĐIỀU HƯỚNG / PHÂN TRANG */}
+        <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronLeft className="w-4 h-4" /> Trước
+          </button>
+
+          <span className="text-sm font-semibold text-slate-700">
+            Hiển thị tuần {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, data.length)} 
+            <span className="text-slate-400 mx-2">|</span> 
+            Trang {currentPage} / {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            Tiếp <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
       </div>
+
+      {/* 2. GỌI BẢNG THỐNG KÊ CHI TIẾT CỦA KC2 */}
+      <AnalysisWeeklyStats2 selectedYear={selectedYear} />
 
     </div>
   );
